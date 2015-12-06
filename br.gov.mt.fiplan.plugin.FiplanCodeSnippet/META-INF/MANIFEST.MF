@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FiplanCodeSnippet
+Bundle-SymbolicName: br.gov.mt.fiplan.plugin.FiplanCodeSnippet;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: br.gov.mt.fiplan.plugin.fiplancodesnippet.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
+Import-Package: org.eclipse.jface.text,
+ org.eclipse.ui.texteditor

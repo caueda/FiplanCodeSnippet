@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Fiplan"
+            id="br.gov.mt.fiplan.plugin.FiplanCodeSnippet">
+      </category>
+      <view
+            name="Fiplan Snippet Code"
+            icon="icons/sample.gif"
+            category="br.gov.mt.fiplan.plugin.FiplanCodeSnippet"
+            class="br.gov.mt.fiplan.plugin.fiplancodesnippet.views.FiplanSnippetView"
+            id="br.gov.mt.fiplan.plugin.fiplancodesnippet.views.FiplanSnippetView">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               ratio="0.5"
+               relative="org.eclipse.ui.views.ProblemView"
+               relationship="right"
+               id="br.gov.mt.fiplan.plugin.fiplancodesnippet.views.FiplanSnippetView">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
+
+</plugin>
