@@ -2,6 +2,7 @@ package br.gov.mt.fiplan.plugin.fiplancodesnippet.views;
 
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.action.Action;
@@ -12,17 +13,15 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.TextSelection;
-import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider;
-import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -40,6 +39,26 @@ import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import br.gov.mt.fiplan.plugin.fiplancodesnippet.data.DBConnector;
+
+
+/**
+ * This sample class demonstrates how to plug-in a new
+ * workbench view. The view shows data obtained from the
+ * model. The sample creates a dummy model on the fly,
+ * but a real implementation would connect to the model
+ * available either in this or another plug-in (e.g. the workspace).
+ * The view is connected to the model using a content provider.
+ * <p>
+ * The view uses a label provider to define how model
+ * objects should be presented in the view. Each
+ * view can present the same model objects using
+ * different labels and icons, if needed. Alternatively,
+ * a single label provider can be shared between views
+ * in order to ensure that objects of the same type are
+ * presented in the same way everywhere.
+ * <p>
+ */
 
 public class FiplanSnippetView extends ViewPart {
 
@@ -53,23 +72,23 @@ public class FiplanSnippetView extends ViewPart {
 	private Action action2;
 	private Action doubleClickAction;
 	private Map<String, String[]> tags = new HashMap<String, String[]>();
-
-	{
-		tags.put("HTML", new String[]{"<body>\n</body>", "<input type=\"text\" name=\"name\"/>", "<a href=\"\">Link</a>"});
-		tags.put("jQuery", new String[]{
-				"$(\"id\").val()",
-				"	$(document).ready(function(){\n" + 
-				"	//TODO\n" + 
-				"	});",
-				"Localizar","Replace","Formatar","Refatorar"});		
-	}
+	
+	/*
+	 * The content provider class is responsible for
+	 * providing objects to the view. It can wrap
+	 * existing objects in adapters or simply return
+	 * objects as-is. These objects may be sensitive
+	 * to the current input of the view, or ignore
+	 * it and always show the same content 
+	 * (like Task List, for example).
+	 */
 	 
-	class ViewContentProvider extends LabelProvider implements ITreeContentProvider, IStyledLabelProvider {
+	class ViewContentProvider extends LabelProvider implements ITreeContentProvider{
 		public String getText(Object element){
 			if(element instanceof Map){
-				return "Menu";
-			} else if(element instanceof Map.Entry){
-				return ((Map.Entry) element).getKey().toString();				
+				return "Opções";
+			} else if(element instanceof Map.Entry<?, ?>){
+				return ((Map.Entry<?, ?>) element).getKey().toString();				
 			} else if(element instanceof String){
 				return element.toString();
 			} else {
@@ -92,9 +111,9 @@ public class FiplanSnippetView extends ViewPart {
 		@Override
 		public Object[] getChildren(Object parent) {
 			if(parent instanceof Map){
-				return ((Map)parent).entrySet().toArray();
+				return ((Map<?, ?>)parent).entrySet().toArray();
 			} else if(parent instanceof Map.Entry){
-				return getChildren(((Map.Entry)parent).getValue());
+				return getChildren(((Map.Entry<?, ?>)parent).getValue());
 			} else if(parent instanceof String[]){
 				return (String[])parent;
 			} else {
@@ -119,9 +138,9 @@ public class FiplanSnippetView extends ViewPart {
 		@Override
 		public boolean hasChildren(Object element) {
 			if(element instanceof Map){
-				return !((Map)element).isEmpty();
+				return !((Map<?, ?>)element).isEmpty();
 			} else if(element instanceof Map.Entry){
-				return hasChildren(((Map.Entry)element).getValue());
+				return hasChildren(((Map.Entry<?, ?>)element).getValue());
 			} else if(element instanceof String[]){
 				return (element != null && ((String[])element).length > 0);
 			} else {
@@ -137,19 +156,6 @@ public class FiplanSnippetView extends ViewPart {
 			} else 
 				return super.getImage(element);
 		}
-
-
-		@Override
-		public StyledString getStyledText(Object element) {
-			String text = getText(element);
-			StyledString ss = new StyledString(text);
-			if(element instanceof String) {
-				ss.append("", StyledString.DECORATIONS_STYLER);
-			}
-			return ss;
-		}
-		
-		
 	}
 	
 	class NameSorter extends ViewerSorter {
@@ -159,12 +165,17 @@ public class FiplanSnippetView extends ViewPart {
 	 * The constructor.
 	 */
 	public FiplanSnippetView() {
+		tags = DBConnector.getMenu();
 	}
 
+	/**
+	 * This is a callback that will allow us
+	 * to create the viewer and initialize it.
+	 */
 	public void createPartControl(Composite parent) {		
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new ViewContentProvider());
-		viewer.setLabelProvider(new DelegatingStyledCellLabelProvider(new ViewContentProvider()));
+		viewer.setLabelProvider(new ViewContentProvider());
 		//viewer.setSorter(new NameSorter());
 		viewer.setInput(new Object[]{tags});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
@@ -189,8 +200,10 @@ public class FiplanSnippetView extends ViewPart {
 					
 					if(sel instanceof TextSelection) {
 						final TextSelection text = (TextSelection)sel;
-						try {							
-							document.replace( text.getOffset(), text.getLength(), obj.toString() );
+						try {						
+							IRegion region = document.getLineInformationOfOffset(text.getOffset());
+							String alias = obj.toString();
+							document.replace( text.getOffset(), text.getLength(), identingCode(region.getLength(), DBConnector.getCode(alias)) );
 						} catch(Exception e) {
 							e.printStackTrace();
 						}
@@ -200,7 +213,7 @@ public class FiplanSnippetView extends ViewPart {
 				}
 			}
 		});
-
+		
 		// Create the help context id for the viewer's control
 //		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "br.com.plugin.Study.viewer");
 //		getSite().setSelectionProvider(viewer);
@@ -208,6 +221,23 @@ public class FiplanSnippetView extends ViewPart {
 //		hookContextMenu();
 //		hookDoubleClickAction();
 //		contributeToActionBars();
+	}
+	
+	private String identingCode(int offset, String codeSnippet) {
+		StringBuilder code = new StringBuilder();
+		String[] lineBroken = codeSnippet.split("\n");
+		for(int index=0; index < lineBroken.length; index++) {
+			String line = lineBroken[index];
+			StringBuilder tmpLine = new StringBuilder();
+			if(index != 0) {
+				for(int i=0; i<offset; i++) {
+					tmpLine.append(" ");				
+				}
+			}
+			tmpLine.append(line.replace("\t", "")).append("\n");
+			code.append(tmpLine);
+		}
+		return code.toString();
 	}
 
 	private void hookContextMenu() {
