@@ -10,3 +10,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.jface.text,
  org.eclipse.ui.texteditor
+Bundle-ClassPath: .,
+ lib/commons-lang-2.6.jar,
+ lib/commons-logging-1.1.1.jar,
+ lib/hsqldb.jar,
+ lib/jackcess-2.1.3.jar,
+ lib/ucanaccess-3.0.4.jar
